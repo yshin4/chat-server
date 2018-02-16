@@ -1,5 +1,5 @@
-let net = require('net');
-let sockets = [];
-let port = 9633;
+var net = require('net');
+var sockets = [];
+var port = 9633;
 
 console.log("runniing");
