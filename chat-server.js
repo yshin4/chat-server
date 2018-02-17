@@ -25,8 +25,11 @@ var server = net.createServer(function(socket) {
             makeRoom(socket, command);
         } else if (command.substring(0, 5) === "/join"){
             inRoom = joinRoom(socket, command);
+        } else if (inRoom) {
+            broadCast(socket, input);
         } else {
-            socket.write(input);
+            console.log(input);
+            //socket.write(input);
         }
     });
 
@@ -37,9 +40,27 @@ var server = net.createServer(function(socket) {
 
 // TODO: Leaveroom
 // TODO: Exit
-// room state, current room
+// TODO: display new user while in room
+// current room
 // using /rooms /make /join while in a room. = allow or disallow?
 // secret room? ask for pw, separate command? but how to store pw
+
+var broadCast = function(sender, message) {
+    for (s of sockets) {
+        if (s.nickname !== sender.nickname) {
+            s.write(sender.nickname + ": " + message);
+        }
+    }
+}
+
+var alertNewUser = function(newUser) {
+    var user = newUser.nickname;
+    for (s of sockets) {
+        if (s.nickname !== user) {
+            s.write("* new user joined chat: " + user + "\n");
+        }
+    }
+}
 
 var joinRoom = function(socket, command) {
     if (command.substring(5).trim() === "") {
@@ -50,6 +71,7 @@ var joinRoom = function(socket, command) {
     var foundRoom = findRoom(roomName);
     if (foundRoom) {
         foundRoom.addMember(socket);
+        alertNewUser(socket);
         socket.write("entering room: " + roomName + "\n");
         displayMembers(foundRoom, socket);
         return true;
@@ -61,10 +83,12 @@ var joinRoom = function(socket, command) {
 
 var displayMembers = function(currentRoom, socket) {
     var members = currentRoom.members;
+    socket.write("Members in the room:\n")
     for (m of members) {
         var isSelf = m.nickname === socket.nickname ? " (** this is you)\n" : "\n";
         socket.write("* " + m.nickname + isSelf);
     }
+    socket.write("end of list.\n");
 }
 
 var displayRooms = function(socket) {
