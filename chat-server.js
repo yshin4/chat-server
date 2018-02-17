@@ -19,7 +19,7 @@ var server = net.createServer(function(socket) {
                 socket.nickname = input;
                 hasNickname = true;
                 console.log("input is here: " + input + "skip");
-                socket.write("Welcome " + input.replace(/\n/g, "") + "!");
+                socket.write("Welcome " + input.replace(/[\n\r]$/g, "") + "!");
             }
         } else {
             // TODO
