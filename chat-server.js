@@ -4,6 +4,7 @@ var rooms = [];
 var port = 9633;
 
 var server = net.createServer(function(socket) {
+    sockets.push(socket);
     socket.write("Welcome to the GungHo test chat server\n");
     socket.write("Login Name?\n");
     var hasNickname = false;
@@ -11,18 +12,19 @@ var server = net.createServer(function(socket) {
     socket.on("data", function(data) {
         var input = data.toString();
         if (!hasNickname) {
-            if (checkNicknameExist(input)) {
-                console.log("does returning error");
+            var jsonInput = JSON.stringify(input);
+            var removeQuote = jsonInput.replace(/^"/, "");
+            var removeNewline = removeQuote.replace(/\\r\\n"|\\n"/, "");            
+            if (checkNicknameExist(removeNewline)) {
                 socket.write("Sorry, name taken.\n");
                 socket.write("Login Name?\n");
             } else {
-                socket.nickname = input;
+                socket.nickname = removeNewline;
                 hasNickname = true;
-                console.log("input is here: " + input + "skip");
-                socket.write("Welcome " + input.replace(/[\n\r]$/g, "") + "!");
+                socket.write("Welcome " + removeNewline + "!\n");
             }
         } else {
-            // TODO
+            socket.write(input);
         }
         
     });
@@ -33,12 +35,11 @@ var server = net.createServer(function(socket) {
 });
 
 var checkNicknameExist = function(nickname) {
-    sockets.forEach(function(socketNickname){
-        console.log("nn is ", socketNickname);
-        if (nickname === socketNickname){
+    for (s of sockets) {
+        if (nickname === s.nickname) {
             return true;
         }
-    });
+    }
     return false;
 };
 
