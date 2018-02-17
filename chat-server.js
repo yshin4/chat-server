@@ -10,13 +10,15 @@ var server = net.createServer(function(socket) {
     socket.on("data", function(data) {
         var input = data.toString();
         if (!hasNickname) {
-            if (!checkNicknameExist(input)) {
+            if (checkNicknameExist(input)) {
                 console.log("does returning error");
                 socket.write("Sorry, name taken.\n");
                 socket.write("Login Name?\n");
             } else {
+                console.log("ohhhhhhh here");
                 socket.nickname = input;
                 hasNickname = true;
+                console.log("does writing error?");
                 socket.write("Welcome ", socket.nickname);
             }
         } else {
@@ -33,11 +35,9 @@ var server = net.createServer(function(socket) {
 var checkNicknameExist = function(nickname) {
     sockets.forEach(function(socketNickname){
         if (nickname === socketNickname){
-            console.log(nickname);
             return true;
         }
     });
-    console.log("finishde for loop");
     return false;
 };
 
