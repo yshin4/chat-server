@@ -1,5 +1,6 @@
 var net = require('net');
 var sockets = [];
+var rooms = [];
 var port = 9633;
 
 var server = net.createServer(function(socket) {
@@ -15,10 +16,9 @@ var server = net.createServer(function(socket) {
                 socket.write("Sorry, name taken.\n");
                 socket.write("Login Name?\n");
             } else {
-                console.log(input);
                 socket.nickname = input;
                 hasNickname = true;
-                socket.write("Welcome " + input);
+                socket.write("Welcome " + input + "!");
             }
         } else {
             // TODO
@@ -33,6 +33,7 @@ var server = net.createServer(function(socket) {
 
 var checkNicknameExist = function(nickname) {
     sockets.forEach(function(socketNickname){
+        console.log("nn is ", socketNickname);
         if (nickname === socketNickname){
             return true;
         }
