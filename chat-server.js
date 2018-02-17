@@ -10,43 +10,24 @@ var server = net.createServer(function(socket) {
     socket.write("Welcome to the GungHo test chat server\n");
     socket.write("Login Name?\n");
     var hasNickname = false;
+    var inRoom = false;
 
     socket.on("data", function(data) {
         var input = data.toString();
         var jsonInput = JSON.stringify(input);
         var removeQuote = jsonInput.replace(/^"/, "");
-        var removeNewline = removeQuote.replace(/\\r\\n"|\\n"/, "");         
-        if (!hasNickname) {       
-            if (checkNicknameExist(removeNewline)) {
-                socket.write("Sorry, name taken.\n");
-                socket.write("Login Name?\n");
-            } else {
-                socket.nickname = removeNewline;
-                hasNickname = true;
-                socket.write("Welcome " + removeNewline + "!\n");
-            }
-        } else if (removeNewline === "/rooms"){
+        var command = removeQuote.replace(/\\r\\n"|\\n"/, "");         
+        if (!hasNickname) {
+            hasNickname = setNickname(socket, command);
+        } else if (command === "/rooms"){
             displayRooms(socket);
-        } else if (removeNewline.substring(0, 5) === "/make"){
-            if (removeNewline.substring(5).trim() === "") {
-                socket.write("Enter room name to make.\nEx) /make room1\n");
-            } else {
-                var roomName = removeNewline.substring(6);
-                makeRoom(socket, roomName);
-            }
-        } else if (removeNewline.substring(0,5) === "/join"){
-            if (removeNewline.substring(5).trim() === "") {
-                socket.write("Enter room name to join.\nEx) /join room1\n");
-            } else {
-                var roomName = removeNewline.substring(6);
-                joinRoom(socket, roomName);
-                socket.write("entering room: " + roomName + "\n");
-            }            
-        }
+        } else if (command.substring(0, 5) === "/make"){
+            makeRoom(socket, command);
+        } else if (command.substring(0, 5) === "/join"){
+            inRoom = joinRoom(socket, command);
         } else {
             socket.write(input);
         }
-        
     });
 
     socket.on("error", function(error) {
@@ -56,30 +37,83 @@ var server = net.createServer(function(socket) {
 
 // TODO: Leaveroom
 // TODO: Exit
-// TODO: joinroom -> display members, if room does not exist
 // room state, current room
+// using /rooms /make /join while in a room. = allow or disallow?
+// secret room? ask for pw, separate command? but how to store pw
 
-var joinRoom = function(socket, roomName) {
-    for (r of rooms) {
-        if (r.name === roomName) {
-            r.addMember(socket.nickname);
-        }
+var joinRoom = function(socket, command) {
+    if (command.substring(5).trim() === "") {
+        socket.write("Enter room name to join.\nEx) /join room1\n");
+        return false;
+    }
+    var roomName = command.substring(6);
+    var foundRoom = findRoom(roomName);
+    if (foundRoom) {
+        foundRoom.addMember(socket);
+        socket.write("entering room: " + roomName + "\n");
+        displayMembers(foundRoom, socket);
+        return true;
+    } else {
+        socket.write("No active room: " + roomName + "\n");
+        return false;
+    }
+}
+
+var displayMembers = function(currentRoom, socket) {
+    var members = currentRoom.members;
+    for (m of members) {
+        var isSelf = m.nickname === socket.nickname ? " (** this is you)\n" : "\n";
+        socket.write("* " + m.nickname + isSelf);
     }
 }
 
 var displayRooms = function(socket) {
-    socket.write("Active rooms are:\n");
-    for (r of rooms) {
-        socket.write("* " + r.name + " (" + r.numMember + ")\n");
+    if (!rooms.length) {
+        socket.write("There are no active rooms.\n")
+    } else {
+        socket.write("Active rooms are:\n");
+        for (r of rooms) {
+            socket.write("* " + r.name + " (" + r.numMember + ")\n");
+        }
+        socket.write("end of list.\n");
     }
-    socket.write("end of list.\n");
 };
 
-var makeRoom = function(socket, roomName) {
-    var r = new room(roomName);
-    socket.write("room " + roomName + " created.\n");
-    rooms.push(r);
+var makeRoom = function(socket, command) {
+    if (command.substring(5).trim() === "") {
+        socket.write("Enter room name to make.\nEx) /make room1\n");
+    } else {
+        var roomName = command.substring(6);    
+        var r = new room(roomName);
+        socket.write("room " + roomName + " created.\n");
+        rooms.push(r);
+    }
 };
+
+var findRoom = function(roomName) {
+    for (r of rooms) {
+        if (r.name === roomName){
+            return r;
+        }
+    }
+    return null;
+}
+
+var askAgain = function(socket) {
+    socket.write("Sorry, name taken.\n");
+    socket.write("Login Name?\n");
+}
+
+var setNickname = function(socket, command) {
+    if (checkNicknameExist(command)){
+        askAgain(socket);
+        return false;
+    } else {
+        socket.nickname = command;
+        socket.write("Welcome " + command + "!\n"); 
+        return true;  
+    }
+}
 
 var checkNicknameExist = function(nickname) {
     for (s of sockets) {
