@@ -29,11 +29,20 @@ var server = net.createServer(function(socket) {
             displayRooms(socket);
         } else if (removeNewline.substring(0, 5) === "/make"){
             if (removeNewline.substring(5).trim() === "") {
-                socket.write("Enter room name.\n");
+                socket.write("Enter room name to make.\nEx) /make room1\n");
             } else {
                 var roomName = removeNewline.substring(6);
                 makeRoom(socket, roomName);
             }
+        } else if (removeNewline.substring(0,5) === "/join"){
+            if (removeNewline.substring(5).trim() === "") {
+                socket.write("Enter room name to join.\nEx) /join room1\n");
+            } else {
+                var roomName = removeNewline.substring(6);
+                joinRoom(socket, roomName);
+                socket.write("entering room: " + roomName + "\n");
+            }            
+        }
         } else {
             socket.write(input);
         }
@@ -45,14 +54,18 @@ var server = net.createServer(function(socket) {
     });
 });
 
-var checkNicknameExist = function(nickname) {
-    for (s of sockets) {
-        if (nickname === s.nickname) {
-            return true;
+// TODO: Leaveroom
+// TODO: Exit
+// TODO: joinroom -> display members, if room does not exist
+// room state, current room
+
+var joinRoom = function(socket, roomName) {
+    for (r of rooms) {
+        if (r.name === roomName) {
+            r.addMember(socket.nickname);
         }
     }
-    return false;
-};
+}
 
 var displayRooms = function(socket) {
     socket.write("Active rooms are:\n");
@@ -66,6 +79,15 @@ var makeRoom = function(socket, roomName) {
     var r = new room(roomName);
     socket.write("room " + roomName + " created.\n");
     rooms.push(r);
+};
+
+var checkNicknameExist = function(nickname) {
+    for (s of sockets) {
+        if (nickname === s.nickname) {
+            return true;
+        }
+    }
+    return false;
 };
 
 server.on("error", function(error) {
