@@ -4,22 +4,39 @@ var port = 9633;
 
 var server = net.createServer(function(socket) {
     socket.write("Welcome to the GungHo test chat server\n");
-    socket.write("Login name?\n");
+    socket.write("Login Name?\n");
     var hasNickname = false;
-    socket.nickname = ""
 
     socket.on("data", function(data) {
+        var input = data.toString();
         if (!hasNickname) {
-            socket.nickname = data.toString();
-            hasNickname = true;
+            if (checkNicknameExist(input)) {
+                socket.write("Sorry, name taken.\n");
+                socket.write("Login Name?\n");
+            } else {
+                socket.nickname = input;
+                hasNickname = true;
+                socket.write("Welcome ", socket.nickname);
+            }
+        } else {
+            // TODO
         }
-        console.log(socket.nickname);
+        
     });
 
     socket.on("error", function(error) {
         console.log("Socket has error: ", error.message);
     });
 });
+
+var checkNicknameExist = function(nickname) {
+    for (i of sockets) {
+        if (i === nickname) {
+            return true;
+        }
+    }
+    return false;
+};
 
 server.on("error", function(error) {
     console.log("Error: ", error.message);
