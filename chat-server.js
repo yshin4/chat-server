@@ -18,8 +18,8 @@ var server = net.createServer(function(socket) {
             } else {
                 socket.nickname = input;
                 hasNickname = true;
-                console.log(String.raw`input`);
-                socket.write("Welcome " + input.replace(/\n$/g, '') + "!");
+                console.log("input is here: " + input + "skip");
+                socket.write("Welcome " + input.replace(/\n/g, "") + "!");
             }
         } else {
             // TODO
