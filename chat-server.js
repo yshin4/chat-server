@@ -30,11 +30,11 @@ var server = net.createServer(function(socket) {
 });
 
 var checkNicknameExist = function(nickname) {
-    for (i of sockets) {
-        if (i === nickname) {
+    sockets.forEach(function(socketNickname){
+        if (nickname === socketNickname){
             return true;
         }
-    }
+    });
     return false;
 };
 
