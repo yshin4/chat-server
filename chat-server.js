@@ -3,8 +3,8 @@ var sockets = [];
 var port = 9633;
 
 var server = net.createServer(function(socket) {
-    socket.write("Welcome to the GungHo test chat server");
-    socket.write("Login name?");
+    socket.write("Welcome to the GungHo test chat server\n");
+    socket.write("Login name?\n");
     var hasNickname = false;
     socket.nickname = ""
 
