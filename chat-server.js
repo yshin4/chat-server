@@ -15,11 +15,10 @@ var server = net.createServer(function(socket) {
                 socket.write("Sorry, name taken.\n");
                 socket.write("Login Name?\n");
             } else {
-                console.log("CHECKING TYPE:", typeof(input));
+                console.log(input);
                 socket.nickname = input;
                 hasNickname = true;
-                console.log("does writing error?");
-                socket.write("Welcome ", input);
+                socket.write("Welcome " + input);
             }
         } else {
             // TODO
