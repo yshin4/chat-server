@@ -11,23 +11,24 @@ const server = net.createServer(function(socket) {
     socket.write("Login Name?\n");
     let hasNickname = false;
     let inRoom = false;
+    socket.room = null;
 
     socket.on("data", function(data) {
-        const input = data.toString();
-        const jsonInput = JSON.stringify(input);
-        const removeQuote = jsonInput.replace(/^"/, "");
-        const command = removeQuote.replace(/\\r\\n"|\\n"/, "");         
+        const command = formatInput(data);        
         if (!hasNickname) {
             hasNickname = setNickname(socket, command);
-        } else if (command === "/rooms"){
+        } else if (command === "/rooms" || command === "/room"){
             displayRooms(socket);
         } else if (command.substring(0, 5) === "/make"){
             makeRoom(socket, command);
         } else if (command.substring(0, 5) === "/join"){
             inRoom = joinRoom(socket, command);
+        } else if (command.substring(0, 6) === "/leave") {
+            leaveRoom(socket, inRoom);
+            inRoom = false;
         } else if (inRoom) {
-            broadCast(socket, input);
-        } else {
+            broadCast(socket, data.toString());
+        }else {
             console.log(input);
             //socket.write(input);
         }
@@ -38,33 +39,39 @@ const server = net.createServer(function(socket) {
     });
 });
 
-// TODO: Leaveroom
 // TODO: Exit
-// TODO: display new user while in room
-// current room
-// using /rooms /make /join while in a room. = allow or disallow?
-// secret room? ask for pw, separate command? but how to store pw
+// using /rooms /make /join while in a room. = only allow them when youre not in the room.
+
+
+const leaveRoom = function (socket, inRoom) {
+    if (!inRoom) {
+        socket.write("You're not in a room.\n");
+        return;
+    }
+    socket.write("Left room " + socket.room.name + ".\n");
+    socket.room.removeMember(socket);
+}
 
 const broadCast = function(sender, message) {
-    for (s of sockets) {
-        if (s.nickname !== sender.nickname) {
-            s.write(sender.nickname + ": " + message);
+    for (member of sender.room.members) {
+        if (member.nickname !== sender.nickname) {
+            member.write(sender.nickname + ": " + message);
         }
     }
 }
 
 const alertNewUser = function(newUser) {
     const user = newUser.nickname;
-    for (s of sockets) {
-        if (s.nickname !== user) {
-            s.write("* new user joined chat: " + user + "\n");
+    for (member of newUser.room.members) {
+        if (member.nickname !== user) {
+            member.write("* new user joined chat: " + user + "\n");
         }
     }
 }
 
 const joinRoom = function(socket, command) {
     if (command.substring(5).trim() === "") {
-        socket.write("Enter room name to join.\nEx) /join room1\n");
+        socket.write("You must enter room name to join.\nEx) /join room1\n");
         return false;
     }
     const roomName = command.substring(6);
@@ -147,6 +154,14 @@ const checkNicknameExist = function(nickname) {
     }
     return false;
 };
+
+const formatInput = function(data) {
+    const input = data.toString();
+    const jsonInput = JSON.stringify(input);
+    const removeQuote = jsonInput.replace(/^"/, "");
+    const removeNewline = removeQuote.replace(/\\r\\n"|\\n"/, "");
+    return removeNewline;
+}
 
 server.on("error", function(error) {
     console.log("Error: ", error.message);
