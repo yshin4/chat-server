@@ -75,9 +75,7 @@ const listCommands = function(socket) {
 const broadCast = function(sender, message) {
     for (member of sender.room.members) {
         if (member.nickname !== sender.nickname) {
-            member.pause();
             member.write(sender.nickname + ": " + message);
-            member.resume();
         }
     }
 };
