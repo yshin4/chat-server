@@ -68,18 +68,19 @@ const leaveRoom = function(socket, inRoom) {
 
 // List of available commands
 const listCommands = function(socket) {
-    socket.write("Commands:\n/help /rooms /make {roomname} /join {roomname} /leave\n");
+    socket.write("Commands:\n/help /rooms /make {roomname} /join {roomname} /leave /quit\n");
 };
 
 // Send message to users in the same room
 const broadCast = function(sender, message) {
     for (member of sender.room.members) {
         if (member.nickname !== sender.nickname) {
+            member.pause();
             member.write(sender.nickname + ": " + message);
+            member.resume();
         }
     }
 };
-
 
 // Let the users in the room know that a user left
 const alertLeftUser = function(leftUser) {
@@ -256,6 +257,7 @@ const formatInput = function(data) {
     const jsonInput = JSON.stringify(input);
     const removeQuote = jsonInput.replace(/^"/, "");
     const removeNewline = removeQuote.replace(/\\r\\n"|\\n"/, "");
+    // return data.toString().replace(/(\r\n|\n|\r)/gm,"");
     return removeNewline;
 };
 
