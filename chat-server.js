@@ -9,7 +9,7 @@ const maxRoom = 20;
 // start server
 const server = net.createServer(function(socket) {
     sockets.push(socket);
-    socket.write("Welcome to the GungHo test chat server\n");
+    socket.write("Welcome to the test chat server\n");
     socket.write("Login Name?\n");
     let hasNickname = false;
     let inRoom = false;
